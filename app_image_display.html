@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>施工-混装影像件信息</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #f5f5f5;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .nav-item {
+            display: block;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .nav-item:hover {
+            background-color: #e3f2fd;
+            color: #007bff;
+        }
+        .nav-item.active {
+            background-color: #e3f2fd;
+            color: #007bff;
+            border-color: #007bff;
+        }
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .header {
+            background-color: #ffffff;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .back-button {
+            font-size: 20px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .tab-bar {
+            background-color: #ffffff;
+            padding: 15px;
+            display: flex;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 14px;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            color: #ff0000;
+            border-bottom-color: #ff0000;
+        }
+
+        .section {
+            background-color: #ffffff;
+            margin: 10px 0;
+            padding: 15px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .image-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .image-container {
+            width: 100%;
+            aspect-ratio: 1;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+
+        .image-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        .bottom-bar {
+            background-color: #ffffff;
+            padding: 15px;
+            position: sticky;
+            bottom: 0;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .save-button {
+            width: 100%;
+            padding: 12px;
+            background-color: #ff0000;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .reject-button {
+            background-color: #ffffff;
+            color: #ff0000;
+            border: 1px solid #ff0000;
+            margin-bottom: 10px;
+        }
+
+        .new-image {
+            border: 2px dashed #007bff;
+            background-color: #f0f8ff;
+        }
+
+        .image-label.new {
+            color: #007bff;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 4px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-title">导航菜单</div>
+        <a href="index.html" class="nav-item">PC端影像件展示</a>
+        <a href="preview_component_overview.html" class="nav-item">组件整体高空俯视图预览</a>
+        <a href="preview_column_height_closeup.html" class="nav-item">最低立柱高度测量值特写照片预览</a>
+        <a href="preview_column_height_panorama.html" class="nav-item">最低立柱测量全景照片预览</a>
+        <a href="app_image_display.html" class="nav-item active">App端影像件展示</a>
+        <a href="tcl_platform.html" class="nav-item">数字平台界面</a>
+    </div>
+    <div class="main-content">
+        <div class="header">
+            <div class="back-button">←</div>
+            <div class="header-title">施工-混装影像件信息</div>
+        </div>
+
+        <div class="tab-bar">
+            <div class="tab active">阵列式-施工</div>
+            <div class="tab">庭院房-施工</div>
+            <div class="tab">其他</div>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <div class="section-title">组件南侧距屋面高度照片【阵列式】</div>
+                <div class="image-grid">
+                    <div class="image-item">
+                        <div class="image-container">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="组件南侧距屋面高度照片">
+                        </div>
+                        <div class="image-label">组件南侧距屋面高度照片</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">支架</div>
+                <div class="image-grid">
+                    <div class="image-item">
+                        <div class="image-container">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="截面防腐">
+                        </div>
+                        <div class="image-label">截面防腐</div>
+                    </div>
+                    <div class="image-item">
+                        <div class="image-container">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="支架正面相片">
+                        </div>
+                        <div class="image-label">支架正面相片</div>
+                    </div>
+                    <div class="image-item">
+                        <div class="image-container">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="支架侧视图">
+                        </div>
+                        <div class="image-label">支架侧视图</div>
+                    </div>
+                    <div class="image-item">
+                        <div class="image-container">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="支架北侧相片">
+                        </div>
+                        <div class="image-label">支架北侧相片（北面东向西）</div>
+                    </div>
+                    <div class="image-item">
+                        <div class="image-container">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="立柱垂直度">
+                        </div>
+                        <div class="image-label">立柱垂直度【阵列式】（选填）</div>
+                    </div>
+                    <div class="image-item new-image" style="position: relative;">
+                        <div class="image-container">
+                            <div style="color: #007bff; font-size: 12px;">+</div>
+                        </div>
+                        <div class="image-label">最低立柱高度测量值特写照片</div>
+                        <div style="position: absolute; top: -10px; right: -10px; background: red; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; z-index: 10;">1</div>
+                    </div>
+                    <div class="image-item new-image" style="position: relative;">
+                        <div class="image-container">
+                            <div style="color: #007bff; font-size: 12px;">+</div>
+                        </div>
+                        <div class="image-label">最低立柱测量全景照片</div>
+                        <div style="position: absolute; top: -10px; right: -10px; background: red; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; z-index: 10;">2</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">组件安装</div>
+                <div class="image-grid">
+                    <div class="image-item">
+                        <div class="image-container">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="组件整体高空俯视图">
+                        </div>
+                        <div class="image-label">组件整体高空俯视图</div>
+                    </div>
+                    <div class="image-item">
+                        <div class="image-container">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="组件倾角照片">
+                        </div>
+                        <div class="image-label">组件倾角照片</div>
+                    </div>
+                    <div class="image-item">
+                        <div class="image-container">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="组件倾角照片1">
+                        </div>
+                        <div class="image-label">组件倾角照片1（选填）</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-bar">
+                <button class="save-button">保存</button>
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div id="prdModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="modal-title">功能点描述</span>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- Content will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟标签切换功能
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // 模拟返回按钮功能
+        document.querySelector('.back-button').addEventListener('click', function() {
+            alert('返回');
+        });
+
+        // 模拟保存按钮功能
+        document.querySelector('.save-button').addEventListener('click', function() {
+            alert('保存成功');
+        });
+
+        // Get the modal
+        var modal = document.getElementById('prdModal');
+        var modalBody = document.getElementById('modalBody');
+        var closeBtn = document.getElementsByClassName('close')[0];
+
+        // Close modal when close button is clicked
+        closeBtn.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        // Function to show PRD description
+        function showPRDDescription(featureId) {
+            var descriptions = {
+                '1': '1. 新增影像件类型：最低立柱高度测量值特写照片\n2. 放置位置：《组件南侧距屋面高度照片【阵列式】》之后\n3. 标记序号：1\n4. 允许上传png、jpg、pdf格式文件\n5. 最大支持上传20MB\n6. 在满足适用房型+二级分类+电站安装形式时必填\n7. 需验真',
+                '2': '1. 新增影像件类型：最低立柱测量全景照片\n2. 放置位置：《组件南侧距屋面高度照片【阵列式】》之后\n3. 标记序号：2\n4. 允许上传png、jpg、pdf格式文件\n5. 最大支持上传20MB\n6. 在满足适用房型+二级分类+电站安装形式时必填\n7. 需验真'
+            };
+
+            modalBody.textContent = descriptions[featureId] || '暂无描述';
+            modal.style.display = "block";
+        }
+
+        // Add click event listeners to number labels
+        document.querySelectorAll('div[style*="background: red"]').forEach(label => {
+            if (label.textContent === '1' || label.textContent === '2') {
+                label.addEventListener('click', function() {
+                    showPRDDescription(this.textContent);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

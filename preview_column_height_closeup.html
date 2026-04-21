@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最低立柱高度测量值特写照片预览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #f5f5f5;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .nav-item {
+            display: block;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .nav-item:hover {
+            background-color: #e3f2fd;
+            color: #007bff;
+        }
+        .nav-item.active {
+            background-color: #e3f2fd;
+            color: #007bff;
+            border-color: #007bff;
+        }
+        .preview-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
+            width: 100%;
+            padding: 20px;
+        }
+        .info-panel {
+            background: white;
+            width: 500px;
+            padding: 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .info-panel h2 {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .info-item {
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .info-item label {
+            font-weight: bold;
+            color: #333;
+        }
+        .info-item span {
+            color: #555;
+            text-align: right;
+            flex: 1;
+            margin-left: 10px;
+        }
+        .info-item.new-item {
+            position: relative;
+            border: 2px solid #e74c3c;
+            background: #fff5f5;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .sequence-number {
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            background: #e74c3c;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .image-panel {
+            flex: 1;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .image-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .image-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        .close-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .image-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 500px;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .placeholder-image {
+            width: 100%;
+            height: 400px;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 16px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .modal-close {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .modal-body h4 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .modal-body p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+            color: #555;
+        }
+        .modal-body ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        .modal-body li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-title">导航菜单</div>
+        <a href="index.html" class="nav-item">PC端影像件展示</a>
+        <a href="preview_component_overview.html" class="nav-item">组件整体高空俯视图预览</a>
+        <a href="preview_column_height_closeup.html" class="nav-item active">最低立柱高度测量值特写照片预览</a>
+        <a href="preview_column_height_panorama.html" class="nav-item">最低立柱测量全景照片预览</a>
+        <a href="app_image_display.html" class="nav-item">App端影像件展示</a>
+        <a href="tcl_platform.html" class="nav-item">数字平台界面</a>
+    </div>
+    <div class="preview-container">
+        <div class="info-panel">
+            <h2>影像信息核对</h2>
+            <div class="info-item new-item">
+                <span class="sequence-number" onclick="showPRD(1)">1</span>
+                <label>电站设计方案:</label>
+                <span>阳光房</span>
+            </div>
+            <div class="info-item new-item">
+                <span class="sequence-number" onclick="showPRD(2)">2</span>
+                <label>电站技术方案:</label>
+                <span>阳光房-普通方案</span>
+            </div>
+            <div class="info-item new-item">
+                <span class="sequence-number" onclick="showPRD(3)">3</span>
+                <label>电站安装形式:</label>
+                <span>阵列式</span>
+            </div>
+        </div>
+        <div class="image-panel">
+            <div class="image-header">
+                <span class="image-title">最低立柱高度测量值特写照片</span>
+                <button class="close-btn" onclick="window.location.href='index.html'">×</button>
+            </div>
+            <div class="image-content">
+                <div class="placeholder-image">
+                    最低立柱高度测量值特写照片
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRD描述模态框 -->
+    <div class="modal" id="prdModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">功能点描述</span>
+                <button class="modal-close" onclick="closePRD()">关闭</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        function showPRD(featureId) {
+            const descriptions = {
+                1: {
+                    title: '功能点：电站设计方案',
+                    addDate: '2026-04-21',
+                    desc: [
+                        '在影像件预览页面的信息核对列表中新增"电站设计方案"字段',
+                        '用于展示电站的设计方案信息，如：阳光房',
+                        '帮助审核人员核对影像件与电站设计方案是否匹配',
+                        '支持点击序号查看PRD中对该功能点的详细描述',
+                        '标记序号：1'
+                    ]
+                },
+                2: {
+                    title: '功能点：电站技术方案',
+                    addDate: '2026-04-21',
+                    desc: [
+                        '在影像件预览页面的信息核对列表中新增"电站技术方案"字段',
+                        '用于展示电站的技术方案信息，如：阳光房-普通方案',
+                        '帮助审核人员核对影像件与电站技术方案是否匹配',
+                        '支持点击序号查看PRD中对该功能点的详细描述',
+                        '标记序号：2'
+                    ]
+                },
+                3: {
+                    title: '功能点：电站安装形式',
+                    addDate: '2026-04-21',
+                    desc: [
+                        '在影像件预览页面的信息核对列表中新增"电站安装形式"字段',
+                        '用于展示电站的安装形式，如：阵列式、庭院式等',
+                        '帮助审核人员核对影像件与电站安装形式是否匹配',
+                        '支持点击序号查看PRD中对该功能点的详细描述',
+                        '标记序号：3'
+                    ]
+                }
+            };
+            
+            const desc = descriptions[featureId];
+            let html = `
+                <h4>${desc.title}</h4>
+                <p><strong>添加日期：</strong>${desc.addDate}</p>
+                <p><strong>说明：</strong></p>
+                <ol>
+                    ${desc.desc.map(d => `<li>${d}</li>`).join('')}
+                </ol>
+            `;
+            
+            document.getElementById('modalBody').innerHTML = html;
+            document.getElementById('prdModal').style.display = 'flex';
+        }
+
+        function closePRD() {
+            document.getElementById('prdModal').style.display = 'none';
+        }
+
+        document.getElementById('prdModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePRD();
+            }
+        });
+    </script>
+</body>
+</html>

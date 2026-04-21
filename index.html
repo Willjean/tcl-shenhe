@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影像件展示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 200px;
+            background-color: #f5f5f5;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .nav-item:hover {
+            background-color: #e3f2fd;
+            color: #007bff;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .tabs {
+            display: flex;
+            margin-left: 20px;
+        }
+
+        .tab {
+            padding: 5px 15px;
+            border: 1px solid #007bff;
+            color: #007bff;
+            background-color: #ffffff;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .tab.active {
+            background-color: #e3f2fd;
+        }
+
+        .status-icon {
+            margin-left: 10px;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+            padding: 20px;
+        }
+
+        .image-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .image-container {
+            width: 100%;
+            height: 150px;
+            background-color: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .image-label {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .image-label.new {
+            color: #007bff;
+            font-weight: bold;
+        }
+
+        .no-image {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .image-title {
+            padding: 8px;
+            text-align: center;
+            font-size: 13px;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .section-header {
+            background-color: #f5f5f5;
+            padding: 10px 20px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .section-toggle {
+            color: #666;
+            cursor: pointer;
+        }
+
+        .bottom-bar {
+            position: sticky;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #ffffff;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background-color: #ffffff;
+            color: #333;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background-color: #ffc107;
+            color: #333;
+            border-color: #ffc107;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: #ffffff;
+            border-color: #dc3545;
+        }
+
+        .new-image {
+            border: 2px dashed #007bff;
+            background-color: #f0f8ff;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 4px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-title">导航菜单</div>
+        <a href="index.html" class="nav-item active">PC端影像件展示</a>
+        <a href="preview_component_overview.html" class="nav-item">组件整体高空俯视图预览</a>
+        <a href="preview_column_height_closeup.html" class="nav-item">最低立柱高度测量值特写照片预览</a>
+        <a href="preview_column_height_panorama.html" class="nav-item">最低立柱测量全景照片预览</a>
+        <a href="app_image_display.html" class="nav-item">App端影像件展示</a>
+        <a href="tcl_platform.html" class="nav-item">数字平台界面</a>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div class="title">龚辛慧[GF260415094925044578-光瑞宝]</div>
+            <div class="tabs">
+                <a href="#" class="tab active">待并网领单</a>
+                <a href="#" class="tab">支架豁免...</a>
+            </div>
+            <div class="status-icon">⭕</div>
+        </div>
+
+        <div class="content">
+            <div class="image-grid">
+        <div class="image-item">
+            <div class="image-container">
+                <div class="no-image">无影像件</div>
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">逆变器铭牌照片2(选填)</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="采集器铭牌照片">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">采集器铭牌照片</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <div class="no-image">无影像件</div>
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">采集器铭牌照片2(选填)</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="逆变器外壳接地相片">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">逆变器外壳接地相片</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="组串接入位置相片">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">组串接入位置相片</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="组串接线方式图">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">组串接线方式图</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="组串开路电压照片1">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">组串开路电压照片1</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="组串开路电压照片2(选填)">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">组串开路电压照片2(选填)</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="组件南侧距屋面高度照片">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">组件南侧距屋面高度照片</div>
+        </div>
+        <!-- 新增的影像件 -->
+        <div class="image-item new-image" onclick="window.location.href='preview_column_height_closeup.html'" style="cursor: pointer;">
+            <div class="image-container">
+                <div class="no-image">无影像件</div>
+                <div class="image-label">1</div>
+            </div>
+            <div class="image-title" style="color: #007bff;">最低立柱高度测量值特写照片</div>
+        </div>
+        <div class="image-item new-image" onclick="window.location.href='preview_column_height_panorama.html'" style="cursor: pointer;">
+            <div class="image-container">
+                <div class="no-image">无影像件</div>
+                <div class="image-label">2</div>
+            </div>
+            <div class="image-title" style="color: #007bff;">最低立柱测量全景照片</div>
+        </div>
+
+        <!-- 第二行 -->
+        <div class="image-item">
+            <div class="image-container">
+                <div class="no-image">无影像件</div>
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">组串开路电压照片3(选填)</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <div class="no-image">无影像件</div>
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">组串开路电压照片4(选填)</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <div class="no-image">无影像件</div>
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">组串开路电压照片5(选填)</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <div class="no-image">无影像件</div>
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">组串开路电压照片6(选填)</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <div class="no-image">无影像件</div>
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">组串开路电压照片7(选填)</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <div class="no-image">无影像件</div>
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">组串开路电压照片8(选填)</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="组件间接地">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">组件间接地</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="支架与接地扁铁连接照片">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">支架与接地扁铁连接照片</div>
+        </div>
+
+        <!-- 第三行 -->
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="接地扁铁与接地极连接照片">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">接地扁铁与接地极连接照片</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="电气接地阻值相片">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">电气接地阻值相片</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="支架接地阻值相片1">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">支架接地阻值相片1</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="直流线缆照片">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">直流线缆照片</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="逆变器输出线缆照片">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">逆变器输出线缆照片</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <div class="no-image">无影像件</div>
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">并网箱输出线缆照片(选填)</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="现场施工安全技术交底1">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">现场施工安全技术交底1</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="现场施工安全技术交底2">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">现场施工安全技术交底2</div>
+        </div>
+
+        <!-- 第四行 -->
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="支架正面相片">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">支架正面相片</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="支架侧视图（南面西向东）">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">支架侧视图（南面西向东）</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="支架侧视图（南面东向西）">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">支架侧视图（南面东向西）</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="支架北侧相片（北面西向东）">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">支架北侧相片（北面西向东）</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="支架北侧相片（北面东向西）">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">支架北侧相片（北面东向西）</div>
+        </div>
+        
+
+        <div class="image-item" onclick="window.location.href='preview_component_overview.html'" style="cursor: pointer;">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="组件整体高空俯视图">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">组件整体高空俯视图</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="南面航拍">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">南面航拍</div>
+        </div>
+
+        <!-- 第五行 -->
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="东面航拍">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">东面航拍</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="北面航拍">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">北面航拍</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="西面航拍(选填)">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">西面航拍(选填)</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="组件倾角照片">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">组件倾角照片</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <div class="no-image">无影像件</div>
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">组件倾角照片1(选填)</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="组件方位角">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">组件方位角</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="组件铭牌照片">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">组件铭牌照片</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="线缆屋面相片">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">线缆屋面相片</div>
+        </div>
+
+        <!-- 第六行 -->
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="线缆下墙照片">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">线缆下墙照片</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lsJ7miJDml6XmnKzmg4XlsIHlrZDnmoTpoo88L3RleHQ+Cjwvc3ZnPgo=" alt="立柱垂直度">
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">立柱垂直度</div>
+        </div>
+        <div class="image-item">
+            <div class="image-container">
+                <div class="no-image">无影像件</div>
+                <div class="image-label">叶伟锋 6882</div>
+            </div>
+            <div class="image-title">双坡验收单</div>
+        </div>
+            </div>
+
+            <div class="section-header">
+                <div class="section-title">施工副屋资料</div>
+                <div class="section-toggle">∨</div>
+            </div>
+
+            <div class="bottom-bar">
+                <button class="btn">订单生效产品配置</button>
+                <button class="btn">进件规则</button>
+                <button class="btn">变更记录查询</button>
+                <button class="btn btn-primary">用户信息变更</button>
+                <button class="btn">打标记录</button>
+                <button class="btn btn-primary">订单打标</button>
+                <button class="btn btn-primary">订单回退</button>
+                <button class="btn btn-primary">下载影像件</button>
+                <button class="btn btn-danger">返回</button>
+            </div>
+
+            <div style="height: 80px;"></div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="prdModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">功能点描述</span>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get the modal
+        var modal = document.getElementById('prdModal');
+        var modalBody = document.getElementById('modalBody');
+        var closeBtn = document.getElementsByClassName('close')[0];
+
+        // Close modal when close button is clicked
+        closeBtn.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        // Function to show PRD description
+        function showPRDDescription(featureId) {
+            var descriptions = {
+                '1': '1. 新增影像件类型：最低立柱高度测量值特写照片\n2. 放置位置：《组件南侧距屋面高度照片》之后\n3. 标记序号：1\n4. 允许上传png、jpg、pdf格式文件\n5. 最大支持上传20MB\n6. 在满足适用房型+二级分类+电站安装形式时必填\n7. 需验真',
+                '2': '1. 新增影像件类型：最低立柱测量全景照片\n2. 放置位置：《组件南侧距屋面高度照片》之后\n3. 标记序号：2\n4. 允许上传png、jpg、pdf格式文件\n5. 最大支持上传20MB\n6. 在满足适用房型+二级分类+电站安装形式时必填\n7. 需验真'
+            };
+
+            modalBody.textContent = descriptions[featureId] || '暂无描述';
+            modal.style.display = "block";
+        }
+
+        // Add click event listeners to image labels with numbers
+        document.querySelectorAll('.image-label').forEach(label => {
+            if (label.textContent === '1' || label.textContent === '2') {
+                label.addEventListener('click', function() {
+                    showPRDDescription(this.textContent);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
